@@ -1,0 +1,23 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function validImage() {
+      return request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    // Foto de perfil: somente o dono grava; usuários autenticados leem.
+    match /profiles/{uid}/{file} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == uid && validImage();
+    }
+
+    // Foto de grupo: somente o proprietário (ou criação de um grupo ainda inexistente).
+    match /groups/{groupId}/{file} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && validImage()
+        && (!firestore.exists(/databases/(default)/documents/groups/$(groupId))
+            || firestore.get(/databases/(default)/documents/groups/$(groupId)).data.ownerId == request.auth.uid);
+    }
+  }
+}

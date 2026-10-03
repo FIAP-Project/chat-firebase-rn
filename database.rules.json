@@ -1,0 +1,46 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "conversations": {
+      "$cid": {
+        "ownerId": {
+          ".read": "auth != null && root.child('conversations/' + $cid + '/members/' + auth.uid).val() === true",
+          ".write": "auth != null && !data.exists() && newData.val() === auth.uid && !$cid.contains('_')",
+          ".validate": "newData.isString()"
+        },
+        "members": {
+          ".read": "auth != null && root.child('conversations/' + $cid + '/members/' + auth.uid).val() === true",
+          "$uid": {
+            ".write": "auth != null && (($cid.contains('_') && $cid.contains($uid) && $cid.contains(auth.uid)) || (!$cid.contains('_') && (root.child('conversations/' + $cid + '/ownerId').val() === auth.uid || (!root.child('conversations/' + $cid + '/ownerId').exists() && $uid === auth.uid))))",
+            ".validate": "newData.val() === true"
+          }
+        }
+      }
+    },
+    "messages": {
+      "$cid": {
+        ".read": "auth != null && root.child('conversations/' + $cid + '/members/' + auth.uid).val() === true",
+        ".indexOn": ["createdAt"],
+        "$mid": {
+          ".write": "auth != null && !data.exists() && newData.exists() && root.child('conversations/' + $cid + '/members/' + auth.uid).val() === true",
+          ".validate": "newData.hasChildren(['senderId', 'text', 'createdAt', 'conversationType', 'target']) && newData.child('senderId').val() === auth.uid && newData.child('text').isString() && newData.child('text').val().length > 0 && newData.child('text').val().length <= 2000 && newData.child('createdAt').val() === now && (newData.child('conversationType').val() === 'direct' || newData.child('conversationType').val() === 'group')",
+          "senderId": { ".validate": "newData.isString()" },
+          "conversationType": { ".validate": "newData.isString()" },
+          "text": { ".validate": "newData.isString()" },
+          "createdAt": { ".validate": "newData.isNumber()" },
+          "target": {
+            ".validate": "newData.hasChildren(['type'])",
+            "type": { ".validate": "newData.val() === 'conversation' || newData.val() === 'member'" },
+            "memberId": { ".validate": "newData.isString() && root.child('conversations/' + $cid + '/members/' + newData.val()).val() === true" },
+            "$other": { ".validate": false }
+          },
+          "mentionedUserIds": {
+            "$i": { ".validate": "newData.isString() && root.child('conversations/' + $cid + '/members/' + newData.val()).val() === true" }
+          },
+          "$other": { ".validate": false }
+        }
+      }
+    }
+  }
+}
