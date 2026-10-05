@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "314412337090",
+    "firebase_url": "https://cp02-mobile-default-rtdb.firebaseio.com",
+    "project_id": "cp02-mobile",
+    "storage_bucket": "cp02-mobile.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:314412337090:android:2ef0d36c5d2beecfae385b",
+        "android_client_info": {
+          "package_name": "br.com.fiap.chatfirebase"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBP466QgY9kdCvf0CEz3xNkztpl2FQBdXY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

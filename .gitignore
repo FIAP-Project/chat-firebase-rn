@@ -6,7 +6,7 @@ android/
 ios/
 .env
 *.log
-google-services.json
+#google-services.json
 GoogleService-Info.plist
 serviceAccountKey.json
 firebaseAdminCredentials.json
