@@ -4,6 +4,7 @@ Aplicativo de chat **individual e em grupo** em React Native + TypeScript, com F
 
 ## 👥 Integrantes
 
+| Nome | RM |
 |------|----|
 | Felipe Cerboncini Cordeiro | 554909 |
 | Pedro Henrique Martins Alves dos Santos | 558107 |
