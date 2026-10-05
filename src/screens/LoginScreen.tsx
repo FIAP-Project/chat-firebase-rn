@@ -1,8 +1,9 @@
 import React, { useCallback, useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Button from '../components/Button';
 import ErrorMessage from '../components/ErrorMessage';
+import TextField from '../components/TextField';
 import { useAuth } from '../hooks/useAuth';
 import { isFirebaseConfigured } from '../services/firebase';
 import type { RootStackParamList } from '../types/navigation';
@@ -43,8 +44,8 @@ export default function LoginScreen({ navigation }: Props): React.JSX.Element {
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         <Text style={styles.title}>💬 Chat Firebase</Text>
         <Text style={styles.subtitle}>Entre com seu e-mail e senha</Text>
-        <TextInput style={styles.input} placeholder="E-mail" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" autoComplete="email" />
-        <TextInput style={styles.input} placeholder="Senha" value={password} onChangeText={setPassword} secureTextEntry autoComplete="password" />
+        <TextField style={styles.input} placeholder="E-mail" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" autoComplete="email" />
+        <TextField style={styles.input} placeholder="Senha" value={password} onChangeText={setPassword} secureTextEntry autoComplete="password" />
         <ErrorMessage message={error} />
         <Button title="Entrar" onPress={handleLogin} loading={loading} />
         <Button title="Criar conta" variant="outline" onPress={() => navigation.navigate('Register')} disabled={loading} />

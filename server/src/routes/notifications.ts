@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { authenticate } from '../middleware/authenticate';
 import { adminFirestore } from '../services/firebaseAdmin';
-import { sendPush } from '../services/notificationSender';
+import { sendPush, checkReceipts } from '../services/notificationSender';
 import { readMessage, resolveRecipients } from '../services/recipientResolver';
 
 export const notificationsRouter = Router();
@@ -69,8 +69,14 @@ notificationsRouter.post('/messages', authenticate, async (req, res) => {
         body: 'Você recebeu uma nova mensagem', // sem expor o conteúdo
         data: { conversationId, conversationType: resolution.conversationType, messageId },
       });
-      await logRef.update({ status: 'sent', ...result });
-      res.status(200).json({ status: 'sent', recipients: resolution.recipients.length, ...result });
+      const { ticketIds, ticketToRef, ...stats } = result;
+      await logRef.update({ status: 'sent', ...stats });
+
+      if (ticketIds && ticketIds.length > 0) {
+        setTimeout(() => checkReceipts(ticketIds, ticketToRef), 15000);
+      }
+
+      res.status(200).json({ status: 'sent', recipients: resolution.recipients.length, ...stats });
     } catch (error) {
       await logRef.delete(); // permite nova tentativa
       throw error;

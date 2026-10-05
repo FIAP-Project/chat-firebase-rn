@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import { sendMessage, subscribeMessages } from '../services/chatService';
+import { ensureDirectConversation, sendMessage, subscribeMessages } from '../services/chatService';
 import type { ChatMessage, ConversationType, MessageTarget } from '../types/chat';
+import { otherParticipant } from '../utils/conversationId';
 import { getErrorMessage } from '../utils/errors';
 
 type SendParams = { text: string; target: MessageTarget; mentionedUserIds: string[] };
@@ -15,22 +16,49 @@ export function useChat(conversationId: string, conversationType: ConversationTy
 
   // Listener em tempo real; removido ao desmontar a tela ou trocar de conversa.
   useEffect(() => {
-    setLoading(true);
-    setMessages([]);
-    const unsubscribe = subscribeMessages(
-      conversationId,
-      (list) => {
-        setMessages(list);
-        setLoading(false);
-        setError(null);
-      },
-      (e) => {
-        setError(getErrorMessage(e));
-        setLoading(false);
-      },
-    );
-    return unsubscribe;
-  }, [conversationId]);
+    let unsubscribe: (() => void) | undefined;
+    let isMounted = true;
+
+    async function init() {
+      setLoading(true);
+      setError(null);
+      setMessages([]);
+      try {
+        if (conversationType === 'direct') {
+          const otherUid = otherParticipant(conversationId, myUid);
+          if (otherUid) {
+            await ensureDirectConversation(myUid, otherUid);
+          }
+        }
+        if (!isMounted) return;
+
+        unsubscribe = subscribeMessages(
+          conversationId,
+          (list) => {
+            setMessages(list);
+            setLoading(false);
+            setError(null);
+          },
+          (e) => {
+            setError(getErrorMessage(e));
+            setLoading(false);
+          },
+        );
+      } catch (e) {
+        if (isMounted) {
+          setError(getErrorMessage(e));
+          setLoading(false);
+        }
+      }
+    }
+
+    init();
+
+    return () => {
+      isMounted = false;
+      if (unsubscribe) unsubscribe();
+    };
+  }, [conversationId, conversationType, myUid]);
 
   const send = useCallback(
     async ({ text, target, mentionedUserIds }: SendParams): Promise<boolean> => {

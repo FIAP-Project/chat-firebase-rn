@@ -48,11 +48,19 @@ export default function ConversationsScreen({ navigation }: Props): React.JSX.El
     [navigation],
   );
 
+  if (status === 'error' || status === 'firestore_error') {
+    if (__DEV__) {
+      console.warn(`Falha no Push: status=${status}`);
+    }
+  }
+
   const pushWarning =
     status === 'permission_denied'
       ? 'Notificações negadas. Ative-as nas configurações do aparelho para receber mensagens em segundo plano.'
-      : status === 'no_token' || status === 'error'
-        ? 'Não foi possível registrar este dispositivo para notificações push.'
+      : status === 'error' || status === 'firestore_error'
+        ? 'Não foi possível ativar as notificações neste aparelho.'
+        : status === 'no_token'
+        ? 'Não foi possível registrar este dispositivo para notificações push (Sem token).'
         : status === 'not_a_device'
           ? 'Notificações push exigem um dispositivo físico.'
           : null;

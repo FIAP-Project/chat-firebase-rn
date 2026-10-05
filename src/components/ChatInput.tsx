@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import TextField from './TextField';
 import type { PublicProfile } from '../types/user';
 import { colors } from '../utils/theme';
 
@@ -36,7 +37,7 @@ export default function ChatInput({ sending, mentionable, selectedMentions, onTo
         </ScrollView>
       ) : null}
       <View style={styles.inputRow}>
-        <TextInput
+        <TextField
           style={styles.input}
           value={text}
           onChangeText={setText}

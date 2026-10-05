@@ -14,3 +14,12 @@ firebaseAdminCredentials.json
 server/.env
 server/node_modules/
 server/dist/
+
+*.jks
+*.keystore
+*.p8
+*.p12
+*.mobileprovision
+.DS_Store
+.env.local
+.env.*.local

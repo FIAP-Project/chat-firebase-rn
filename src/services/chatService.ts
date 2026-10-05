@@ -40,9 +40,9 @@ export async function ensureDirectConversation(myUid: string, otherUid: string):
     const participantIds = [myUid, otherUid].sort();
     await setDoc(docRef, { participantIds, createdAt: Date.now() });
   }
-  await update(ref(realtimeDb), {
-    [`conversations/${id}/members/${myUid}`]: true,
-    [`conversations/${id}/members/${otherUid}`]: true,
+  await update(ref(realtimeDb, `conversations/${id}/members`), {
+    [myUid]: true,
+    [otherUid]: true,
   });
   return id;
 }
@@ -63,7 +63,13 @@ export function subscribeDirectConversations(
           return [{ id: d.id, type: 'direct', participants: [ids[0], ids[1]], createdAt: asNumber(d.data().createdAt) }];
         }),
       ),
-    onError,
+    (error: unknown) => {
+      if (__DEV__) {
+        const err = error as { code?: string; message?: string };
+        console.warn('subscribeDirectConversations error:', err?.code, err?.message);
+      }
+      onError(error);
+    },
   );
 }
 

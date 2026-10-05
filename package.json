@@ -20,6 +20,7 @@
     "expo-image-picker": "~57.0.20",
     "expo-notifications": "~57.0.21",
     "expo-status-bar": "~57.0.1",
+    "expo-system-ui": "~57.0.4",
     "firebase": "^12.19.0",
     "react": "19.2.3",
     "react-native": "0.86.3",
@@ -27,9 +28,7 @@
     "react-native-screens": "~4.26.0"
   },
   "devDependencies": {
-    "@types/node": "^26.6.4",
     "@types/react": "~19.2.0",
-    "ts-node": "^10.9.2",
     "typescript": "~5.9.2"
   }
 }

@@ -4,7 +4,7 @@ import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 import { doc, setDoc, updateDoc } from 'firebase/firestore';
 import { firestore } from './firebase';
-import type { DeviceRegistrationStatus, PushPayload } from '../types/notification';
+import type { PushPayload, DeviceRegistrationStatus } from '../types/notification';
 import { isRecord } from '../utils/parsing';
 
 // Mostra o alerta também com o app aberto.
@@ -47,17 +47,39 @@ export async function registerDevice(uid: string): Promise<DeviceRegistrationSta
     if (status !== 'granted') return 'permission_denied';
 
     const projectId = getProjectId();
-    const tokenResult = await Notifications.getExpoPushTokenAsync(projectId ? { projectId } : undefined);
+    let tokenResult;
+    try {
+      tokenResult = await Notifications.getExpoPushTokenAsync(projectId ? { projectId } : undefined);
+    } catch (e: unknown) {
+      if (__DEV__) {
+        const err = e as { code?: string; message?: string };
+        console.warn('registerDevice (getExpoPushTokenAsync) error:', err?.code, err?.message);
+      }
+      return 'error';
+    }
+
     if (!tokenResult.data) return 'no_token';
 
-    await setDoc(doc(firestore, 'users', uid, 'devices', deviceDocId(tokenResult.data)), {
-      token: tokenResult.data,
-      platform: Platform.OS,
-      enabled: true,
-      updatedAt: Date.now(),
-    });
-    return 'registered';
-  } catch {
+    try {
+      await setDoc(doc(firestore, 'users', uid, 'devices', deviceDocId(tokenResult.data)), {
+        token: tokenResult.data,
+        platform: Platform.OS,
+        enabled: true,
+        updatedAt: Date.now(),
+      });
+      return 'registered';
+    } catch (e: unknown) {
+      if (__DEV__) {
+        const err = e as { code?: string; message?: string };
+        console.warn('registerDevice (setDoc) error:', err?.code, err?.message);
+      }
+      return 'firestore_error';
+    }
+  } catch (e: unknown) {
+    if (__DEV__) {
+      const err = e as { code?: string; message?: string };
+      console.warn('registerDevice (general) error:', err?.code, err?.message);
+    }
     return 'error';
   }
 }

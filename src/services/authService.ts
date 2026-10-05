@@ -6,6 +6,7 @@ import {
 } from 'firebase/auth';
 import type { Unsubscribe, User } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
+import { Alert } from 'react-native';
 import { firebaseAuth, firestore } from './firebase';
 import { uploadProfilePhoto } from './storageService';
 import type { RegisterInput } from '../types/user';
@@ -41,7 +42,12 @@ export async function register(input: RegisterInput): Promise<void> {
   if (input.photoUri) {
     try {
       photoUrl = await uploadProfilePhoto(uid, input.photoUri);
-    } catch {
+    } catch (error: unknown) {
+      if (__DEV__) {
+        const err = error instanceof Error ? error : new Error(String(error));
+        console.warn('Erro ao enviar foto de perfil:', err.message);
+      }
+      Alert.alert('Atenção', 'Conta criada, mas não foi possível enviar a foto. Tente novamente depois.');
       photoUrl = ''; // a conta é criada mesmo se a foto falhar; usa imagem padrão
     }
   }

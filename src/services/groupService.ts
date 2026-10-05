@@ -52,7 +52,7 @@ export async function createGroup(input: CreateGroupInput): Promise<void> {
   if (memberIds.length < 2) throw new AppError('Um grupo precisa de pelo menos 2 integrantes.');
   if (memberIds.length > input.memberLimit) throw new AppError('A quantidade de integrantes excede o limite do grupo.');
 
-  const photoUrl = input.photoUri ? await uploadGroupPhoto(input.id, input.photoUri) : '';
+  const photoUrl = input.photoUri ? await uploadGroupPhoto(input.ownerId, input.id, input.photoUri) : '';
   const now = Date.now();
 
   // Firestore: metadados do grupo, integrantes, limite e política (as regras reforçam o limite).
@@ -69,15 +69,15 @@ export async function createGroup(input: CreateGroupInput): Promise<void> {
 
   // Realtime Database: espelho dos integrantes para as regras das mensagens.
   // 1º passo registra o proprietário; 2º passo (já como dono) adiciona os demais.
-  await update(ref(realtimeDb), {
-    [`conversations/${input.id}/ownerId`]: input.ownerId,
-    [`conversations/${input.id}/members/${input.ownerId}`]: true,
+  await update(ref(realtimeDb, `conversations/${input.id}`), {
+    ownerId: input.ownerId,
+    [`members/${input.ownerId}`]: true,
   });
   const others: Record<string, boolean> = {};
   memberIds.filter((m) => m !== input.ownerId).forEach((m) => {
-    others[`conversations/${input.id}/members/${m}`] = true;
+    others[m] = true;
   });
-  await update(ref(realtimeDb), others);
+  await update(ref(realtimeDb, `conversations/${input.id}/members`), others);
 }
 
 /**
@@ -86,7 +86,7 @@ export async function createGroup(input: CreateGroupInput): Promise<void> {
  */
 export async function updateGroup(groupId: string, actorId: string, changes: UpdateGroupInput): Promise<void> {
   const photoUrl =
-    changes.photoUri === undefined ? undefined : changes.photoUri === null ? '' : await uploadGroupPhoto(groupId, changes.photoUri);
+    changes.photoUri === undefined ? undefined : changes.photoUri === null ? '' : await uploadGroupPhoto(actorId, groupId, changes.photoUri);
   const groupRef = doc(firestore, 'groups', groupId);
 
   await runTransaction(firestore, async (tx) => {
@@ -124,7 +124,7 @@ export async function addMember(groupId: string, actorId: string, memberId: stri
     if (group.memberIds.length >= group.memberLimit) throw new AppError('O grupo atingiu o limite de integrantes.');
     tx.update(groupRef, { memberIds: [...group.memberIds, memberId], updatedAt: Date.now() });
   });
-  await update(ref(realtimeDb), { [`conversations/${groupId}/members/${memberId}`]: true });
+  await update(ref(realtimeDb, `conversations/${groupId}/members`), { [memberId]: true });
 }
 
 export async function removeMember(groupId: string, actorId: string, memberId: string): Promise<void> {
@@ -140,7 +140,7 @@ export async function removeMember(groupId: string, actorId: string, memberId: s
     tx.update(groupRef, { memberIds: group.memberIds.filter((m) => m !== memberId), updatedAt: Date.now() });
   });
   // Remove o acesso às novas mensagens (regras do Realtime Database).
-  await update(ref(realtimeDb), { [`conversations/${groupId}/members/${memberId}`]: null });
+  await update(ref(realtimeDb, `conversations/${groupId}/members`), { [memberId]: null });
 }
 
 export function subscribeGroup(
@@ -161,5 +161,15 @@ export function subscribeGroups(
   onError: (error: unknown) => void,
 ): Unsubscribe {
   const q = query(collection(firestore, 'groups'), where('memberIds', 'array-contains', uid));
-  return onSnapshot(q, (snap) => onData(snap.docs.map((d) => parseGroup(d.id, d.data()))), onError);
+  return onSnapshot(
+    q,
+    (snap) => onData(snap.docs.map((d) => parseGroup(d.id, d.data()))),
+    (error: unknown) => {
+      if (__DEV__) {
+        const err = error as { code?: string; message?: string };
+        console.warn('subscribeGroups error:', err?.code, err?.message);
+      }
+      onError(error);
+    },
+  );
 }

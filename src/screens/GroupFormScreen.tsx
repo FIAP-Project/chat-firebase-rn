@@ -1,11 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Avatar from '../components/Avatar';
 import Button from '../components/Button';
 import ErrorMessage from '../components/ErrorMessage';
 import GroupMemberItem from '../components/GroupMemberItem';
 import Loading from '../components/Loading';
+import TextField from '../components/TextField';
 import UserPicker from '../components/UserPicker';
 import { useAuth } from '../hooks/useAuth';
 import { useGroup } from '../hooks/useGroups';
@@ -60,8 +61,8 @@ export default function GroupFormScreen({ route, navigation }: Props): React.JSX
 
   const handlePhoto = useCallback(async () => {
     try {
-      const uri = await pickImage();
-      if (uri) setPhotoUri(uri);
+      const result = await pickImage();
+      if (result?.uri) setPhotoUri(result.uri);
     } catch (e) {
       setError(getErrorMessage(e));
     }
@@ -136,10 +137,10 @@ export default function GroupFormScreen({ route, navigation }: Props): React.JSX
       </Pressable>
 
       <Text style={styles.label}>Nome do grupo</Text>
-      <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Ex.: Turma 3ESPY" maxLength={60} />
+      <TextField style={styles.input} value={name} onChangeText={setName} placeholder="Ex.: Turma 3ESPY" maxLength={60} />
 
       <Text style={styles.label}>Limite de integrantes (inclui o proprietário)</Text>
-      <TextInput style={styles.input} value={limitText} onChangeText={setLimitText} keyboardType="number-pad" maxLength={3} />
+      <TextField style={styles.input} value={limitText} onChangeText={setLimitText} keyboardType="number-pad" maxLength={3} />
       <Text style={styles.hint}>
         {memberCount} integrante(s) · {slots} {slots === 1 ? 'vaga disponível' : 'vagas disponíveis'}
       </Text>
@@ -170,12 +171,24 @@ export default function GroupFormScreen({ route, navigation }: Props): React.JSX
           })}
           <Text style={styles.hint}>Toque em um usuário abaixo para adicioná-lo:</Text>
           <View style={{ height: 280 }}>
-            <UserPicker users={users} excludeIds={currentMembers} onPressUser={handleAdd} emptyText="Todos os usuários já estão no grupo." />
+            <UserPicker
+              users={users}
+              excludeIds={currentMembers}
+              onPressUser={handleAdd}
+              emptyText="Todos os usuários já estão no grupo."
+              embedded
+            />
           </View>
         </View>
       ) : (
         <View style={[styles.box, { height: 300 }]}>
-          <UserPicker users={users} excludeIds={[user.uid]} selectedIds={selectedIds} onPressUser={toggleSelected} />
+          <UserPicker
+            users={users}
+            excludeIds={[user.uid]}
+            selectedIds={selectedIds}
+            onPressUser={toggleSelected}
+            embedded
+          />
         </View>
       )}
 

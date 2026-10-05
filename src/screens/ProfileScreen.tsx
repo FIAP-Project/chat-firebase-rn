@@ -1,15 +1,16 @@
-import React, { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import { ScrollView, StyleSheet, Text, View, Pressable, Alert } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Avatar from '../components/Avatar';
 import ErrorMessage from '../components/ErrorMessage';
 import Loading from '../components/Loading';
 import { useAuth } from '../hooks/useAuth';
-import { getViewedProfile } from '../services/userService';
+import { getViewedProfile, updateProfilePhoto } from '../services/userService';
 import type { RootStackParamList } from '../types/navigation';
 import type { ViewedProfile } from '../types/user';
 import { getErrorMessage } from '../utils/errors';
 import { colors } from '../utils/theme';
+import { pickImage } from '../utils/pickImage';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Profile'>;
 
@@ -28,6 +29,7 @@ export default function ProfileScreen({ route }: Props): React.JSX.Element {
   const [profile, setProfile] = useState<ViewedProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [updatingPhoto, setUpdatingPhoto] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -50,7 +52,26 @@ export default function ProfileScreen({ route }: Props): React.JSX.Element {
     };
   }, [uid, user]);
 
+  const handleChangePhoto = useCallback(async () => {
+    if (!user || user.uid !== uid) return;
+    try {
+      const result = await pickImage();
+      if (!result?.uri) return;
+      setUpdatingPhoto(true);
+      setError(null);
+      const newPhotoUrl = await updateProfilePhoto(user.uid, result.uri);
+      setProfile((prev) => (prev ? { ...prev, photoUrl: newPhotoUrl } : prev));
+      Alert.alert('Sucesso', 'Sua foto de perfil foi atualizada.');
+    } catch (e) {
+      setError(getErrorMessage(e));
+    } finally {
+      setUpdatingPhoto(false);
+    }
+  }, [user, uid]);
+
   if (loading) return <Loading message="Carregando perfil..." />;
+
+  const isOwnProfile = user?.uid === uid;
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -60,6 +81,11 @@ export default function ProfileScreen({ route }: Props): React.JSX.Element {
           <View style={styles.header}>
             <Avatar uri={profile.photoUrl} name={profile.name} size={110} />
             <Text style={styles.name}>{profile.name}</Text>
+            {isOwnProfile && (
+              <Pressable onPress={handleChangePhoto} disabled={updatingPhoto}>
+                <Text style={styles.changePhotoText}>{updatingPhoto ? 'Enviando...' : 'Alterar foto de perfil'}</Text>
+              </Pressable>
+            )}
           </View>
           <Field label="E-mail" value={profile.email} />
           <Field label="Celular" value={profile.phoneNumber} />
@@ -74,6 +100,7 @@ const styles = StyleSheet.create({
   container: { padding: 20, backgroundColor: colors.bg, flexGrow: 1 },
   header: { alignItems: 'center', marginBottom: 20 },
   name: { fontSize: 22, fontWeight: '700', marginTop: 12, color: colors.text },
+  changePhotoText: { marginTop: 12, color: colors.primary, fontWeight: '600' },
   field: { backgroundColor: colors.card, padding: 14, borderRadius: 10, marginBottom: 8 },
   label: { color: colors.muted, fontSize: 12 },
   value: { color: colors.text, fontSize: 16, marginTop: 2 },

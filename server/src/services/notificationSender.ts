@@ -14,7 +14,13 @@ export type PushInput = {
   data: Record<string, string>;
 };
 
-type ExpoTicket = { status: 'ok' | 'error'; message?: string; details?: { error?: string } };
+type ExpoTicket =
+  | { status: 'ok'; id: string }
+  | { status: 'error'; message?: string; details?: { error?: string } };
+
+type ExpoReceipt =
+  | { status: 'ok' }
+  | { status: 'error'; message?: string; details?: { error?: string } };
 
 function isTicketArray(value: unknown): value is ExpoTicket[] {
   return Array.isArray(value);
@@ -37,10 +43,13 @@ async function loadDevices(uids: string[]): Promise<Device[]> {
  * Envia pelo Expo Push Service (que entrega via FCM no Android e APNs no iOS).
  * Tokens inválidos (DeviceNotRegistered) são DESATIVADOS no Firestore.
  */
-export async function sendPush(input: PushInput): Promise<{ devices: number; sent: number; disabled: number }> {
+export async function sendPush(input: PushInput): Promise<{ devices: number; sent: number; disabled: number; ticketIds: string[]; ticketToRef: Record<string, DocumentReference> }> {
   const devices = await loadDevices(input.recipients);
   let sent = 0;
   let disabled = 0;
+  let errorCount = 0;
+  const ticketIds: string[] = [];
+  const ticketToRef: Record<string, DocumentReference> = {};
 
   for (let i = 0; i < devices.length; i += CHUNK) {
     const chunk = devices.slice(i, i + CHUNK);
@@ -68,12 +77,50 @@ export async function sendPush(input: PushInput): Promise<{ devices: number; sen
       tickets.map(async (ticket, index) => {
         if (ticket.status === 'ok') {
           sent += 1;
-        } else if (ticket.details?.error === 'DeviceNotRegistered') {
-          disabled += 1;
-          await chunk[index].ref.update({ enabled: false, updatedAt: FieldValue.serverTimestamp() });
+          ticketIds.push(ticket.id);
+          ticketToRef[ticket.id] = chunk[index].ref;
+        } else {
+          errorCount += 1;
+          console.warn(`Expo ticket error: ${ticket.details?.error} - ${ticket.message}`);
+          if (ticket.details?.error === 'DeviceNotRegistered') {
+            disabled += 1;
+            await chunk[index].ref.update({ enabled: false, updatedAt: FieldValue.serverTimestamp() });
+          }
         }
       }),
     );
   }
-  return { devices: devices.length, sent, disabled };
+
+  console.log(`[sendPush] Destinatários: ${input.recipients.length}, Dispositivos: ${devices.length}, OK: ${sent}, Erros: ${errorCount}`);
+  return { devices: devices.length, sent, disabled, ticketIds, ticketToRef };
+}
+
+export async function checkReceipts(ticketIds: string[], ticketToRef: Record<string, DocumentReference>): Promise<void> {
+  if (ticketIds.length === 0) return;
+
+  try {
+    const response = await fetch('https://exp.host/--/api/v2/push/getReceipts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ ids: ticketIds }),
+    });
+    if (!response.ok) throw new Error(`getReceipts respondeu ${response.status}`);
+    const json: unknown = await response.json();
+    const data = typeof json === 'object' && json !== null && 'data' in json ? (json as { data: Record<string, ExpoReceipt> }).data : {};
+
+    for (const [id, receipt] of Object.entries(data)) {
+      if (receipt.status === 'error') {
+        console.warn(`Expo receipt error for ticket ${id}: ${receipt.details?.error} - ${receipt.message}`);
+        if (receipt.details?.error === 'DeviceNotRegistered') {
+          const ref = ticketToRef[id];
+          if (ref) {
+            console.log(`Desativando device via receipt para o ticket ${id}`);
+            await ref.update({ enabled: false, updatedAt: FieldValue.serverTimestamp() }).catch(e => console.error('Erro ao atualizar ref', e));
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Falha ao checar recibos:', err);
+  }
 }

@@ -37,12 +37,12 @@ Aplicativo de chat **individual e em grupo** em React Native + TypeScript, com F
 ## 🗂️ Estrutura
 
 ```
-App.tsx · index.ts · app.config.ts
+App.tsx · index.ts · app.config.js · eas.json
 firebaseConfig.json            # config do SDK cliente (sem segredos)
 firestore.rules · database.rules.json · storage.rules · firebase.json
 src/
   components/  Avatar, Button, ChatInput, ChatMessage, ConversationItem,
-               GroupMemberItem, UserPicker, Loading, ErrorMessage
+               GroupMemberItem, UserPicker, Loading, ErrorMessage, TextField
   screens/     Login, Register, Conversations, Users, GroupForm, Chat,
                GroupMembers, Profile
   services/    firebase, authService, userService, groupService, chatService,
@@ -87,12 +87,12 @@ npm start                     # inicia o Metro para o development build
 
 ## 🖼️ Fotos (Firebase Storage)
 
-As imagens são escolhidas com `expo-image-picker` (permissão da galeria solicitada e tratada), enviadas ao **Firebase Storage** (`profiles/{uid}/…` e `groups/{groupId}/…`) e **somente a URL** é gravada no Firestore. Sem foto, ou se ela falhar ao carregar, o `Avatar` mostra uma imagem padrão (inicial/ícone).
+As imagens são escolhidas com `expo-image-picker` (permissão da galeria solicitada e tratada), enviadas ao **Firebase Storage** (`profiles/{uid}/…` e `groupPhotos/{ownerUid}/{groupId}/…`) e **somente a URL** é gravada no Firestore. Sem foto, ou se ela falhar ao carregar, o `Avatar` mostra uma imagem padrão (inicial/ícone).
 
 ## 🔔 Notificações push — Android e iOS
 
 1. `eas login` → `eas init` (gera o `projectId`; coloque em `EAS_PROJECT_ID`).
-2. **Android:** adicione o app Android no Firebase (package `br.com.fiap.chatfirebase`), baixe o **`google-services.json`** para a raiz do projeto (o `app.config.ts` o detecta) e envie a **chave de conta de serviço FCM V1** ao EAS: `eas credentials` → Android → *Google Service Account Key for FCM V1*.
+2. **Android:** adicione o app Android no Firebase (package `br.com.fiap.chatfirebase`), baixe o **`google-services.json`** para a raiz do projeto (o `app.config.js` o detecta) e envie a **chave de conta de serviço FCM V1** ao EAS: `eas credentials` → Android → *Google Service Account Key for FCM V1*. O `google-services.json` é versionado no repositório (identifica o app, não é segredo). Build nativo: `eas build --profile development|preview --platform android`.
 3. **iOS:** requer conta Apple Developer. `eas credentials` cria/gerencia a chave **APNs**. Build: `eas build --profile development --platform ios`.
 4. Teste em **dispositivo físico**. O token é gravado em `users/{uid}/devices/{deviceId}`; no logout ele é desativado.
 5. Ao tocar na notificação, o `payload` (`conversationId`, `conversationType`) abre a conversa correta (app aberto, em segundo plano ou fechado).
@@ -106,13 +106,13 @@ As imagens são escolhidas com `expo-image-picker` (permissão da galeria solici
 | `direct_messages_only` | Grupos não geram push; apenas conversas individuais |
 | `disabled` | Nenhum push do grupo |
 
-Regras gerais (aplicadas **no servidor**): o remetente nunca é notificado; só integrantes entram; tokens inválidos (`DeviceNotRegistered`) são desativados; o texto do push é genérico (“Você recebeu uma nova mensagem”) para não expor conteúdo.
+Regras gerais (aplicadas **no servidor**): o remetente nunca é notificado; só integrantes entram; o texto do push é GENÉRICO de propósito ("Você recebeu uma nova mensagem") para não expor o conteúdo. A API confere os recibos do Expo (`getReceipts`) e desativa tokens inválidos (`DeviceNotRegistered`).
 
 ## 🌐 API online (`server/`)
 
 **Tecnologia:** Node.js + Express + TypeScript + Firebase Admin SDK. Envio via Expo Push Service (FCM no Android / APNs no iOS).
 
-**URL pública:** `PREENCHER — https://sua-api.onrender.com`
+**URL pública:** `<URL_DA_API>`
 **Health check:** `GET /health` → `{ "status": "ok" }`
 
 | Endpoint | Descrição |

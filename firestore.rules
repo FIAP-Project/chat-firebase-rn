@@ -40,7 +40,8 @@ service cloud.firestore {
 
     // ID = uidA_uidB (ordenados). Somente os dois participantes.
     match /directConversations/{cid} {
-      allow read: if signedIn() && request.auth.uid in cid.split('_');
+      allow get: if signedIn() && request.auth.uid in cid.split('_');
+      allow list: if signedIn() && request.auth.uid in resource.data.participantIds;
       allow create: if signedIn()
         && request.resource.data.participantIds.size() == 2
         && request.auth.uid in request.resource.data.participantIds

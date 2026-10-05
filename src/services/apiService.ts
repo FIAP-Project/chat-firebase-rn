@@ -33,7 +33,13 @@ export async function requestMessagePush(conversationId: string, messageId: stri
     method: 'POST',
     body: JSON.stringify({ conversationId, messageId }),
   });
-  if (!response.ok) throw new AppError('A mensagem foi enviada, mas a notificação não pôde ser disparada.');
+  if (!response.ok) {
+    if (__DEV__) {
+      const bodyText = await response.text().catch(() => '');
+      console.warn(`requestMessagePush erro HTTP ${response.status}:`, bodyText);
+    }
+    throw new AppError('A mensagem foi enviada, mas a notificação não pôde ser disparada.');
+  }
 }
 
 /** Dados cadastrais de outro usuário: a API valida se há conversa/grupo em comum. */

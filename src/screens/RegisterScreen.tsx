@@ -1,9 +1,10 @@
 import React, { useCallback, useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Avatar from '../components/Avatar';
 import Button from '../components/Button';
 import ErrorMessage from '../components/ErrorMessage';
+import TextField from '../components/TextField';
 import { useAuth } from '../hooks/useAuth';
 import { isFirebaseConfigured } from '../services/firebase';
 import type { RootStackParamList } from '../types/navigation';
@@ -28,8 +29,8 @@ export default function RegisterScreen({ navigation }: Props): React.JSX.Element
 
   const handlePhoto = useCallback(async () => {
     try {
-      const uri = await pickImage();
-      if (uri) setPhotoUri(uri);
+      const result = await pickImage();
+      if (result?.uri) setPhotoUri(result.uri);
     } catch (e) {
       setError(getErrorMessage(e));
     }
@@ -59,12 +60,12 @@ export default function RegisterScreen({ navigation }: Props): React.JSX.Element
           <Text style={styles.photoText}>{photoUri ? 'Trocar foto' : 'Escolher foto de perfil'}</Text>
         </Pressable>
         <View>
-          <TextInput style={styles.input} placeholder="Nome completo" value={name} onChangeText={setName} />
-          <TextInput style={styles.input} placeholder="E-mail" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" />
-          <TextInput style={styles.input} placeholder="Celular com DDD" value={phoneNumber} onChangeText={setPhoneNumber} keyboardType="phone-pad" />
-          <TextInput style={styles.input} placeholder="Data de nascimento (DD/MM/AAAA)" value={birthDate} onChangeText={(t) => setBirthDate(formatBirthDate(t))} keyboardType="number-pad" maxLength={10} />
-          <TextInput style={styles.input} placeholder="Senha (mín. 6 caracteres)" value={password} onChangeText={setPassword} secureTextEntry />
-          <TextInput style={styles.input} placeholder="Confirmar senha" value={confirmPassword} onChangeText={setConfirmPassword} secureTextEntry />
+          <TextField style={styles.input} placeholder="Nome completo" value={name} onChangeText={setName} />
+          <TextField style={styles.input} placeholder="E-mail" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" />
+          <TextField style={styles.input} placeholder="Celular com DDD" value={phoneNumber} onChangeText={setPhoneNumber} keyboardType="phone-pad" />
+          <TextField style={styles.input} placeholder="Data de nascimento (DD/MM/AAAA)" value={birthDate} onChangeText={(t) => setBirthDate(formatBirthDate(t))} keyboardType="number-pad" maxLength={10} />
+          <TextField style={styles.input} placeholder="Senha (mín. 6 caracteres)" value={password} onChangeText={setPassword} secureTextEntry />
+          <TextField style={styles.input} placeholder="Confirmar senha" value={confirmPassword} onChangeText={setConfirmPassword} secureTextEntry />
         </View>
         <ErrorMessage message={error} />
         <Button title="Criar conta" onPress={handleRegister} loading={loading} />

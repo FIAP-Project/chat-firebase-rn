@@ -15,9 +15,8 @@
   "include": [
     "**/*.ts",
     "**/*.tsx",
-    ".expo/types/**/*.ts",
-    "expo-env.d.ts"
-, "app.config.js"  ],
+    "app.config.js"
+  ],
   "exclude": [
     "server",
     "node_modules"

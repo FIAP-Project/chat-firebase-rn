@@ -11,6 +11,7 @@
         },
         "members": {
           ".read": "auth != null && root.child('conversations/' + $cid + '/members/' + auth.uid).val() === true",
+          ".write": "auth != null && ($cid.contains('_') && $cid.contains(auth.uid))",
           "$uid": {
             ".write": "auth != null && (($cid.contains('_') && $cid.contains($uid) && $cid.contains(auth.uid)) || (!$cid.contains('_') && (root.child('conversations/' + $cid + '/ownerId').val() === auth.uid || (!root.child('conversations/' + $cid + '/ownerId').exists() && $uid === auth.uid))))",
             ".validate": "newData.val() === true"
@@ -24,7 +25,7 @@
         ".indexOn": ["createdAt"],
         "$mid": {
           ".write": "auth != null && !data.exists() && newData.exists() && root.child('conversations/' + $cid + '/members/' + auth.uid).val() === true",
-          ".validate": "newData.hasChildren(['senderId', 'text', 'createdAt', 'conversationType', 'target']) && newData.child('senderId').val() === auth.uid && newData.child('text').isString() && newData.child('text').val().length > 0 && newData.child('text').val().length <= 2000 && newData.child('createdAt').val() === now && (newData.child('conversationType').val() === 'direct' || newData.child('conversationType').val() === 'group')",
+          ".validate": "newData.hasChildren(['senderId', 'text', 'createdAt', 'conversationType', 'target']) && newData.child('senderId').val() === auth.uid && newData.child('text').isString() && newData.child('text').val().length > 0 && newData.child('text').val().length <= 2000 && (newData.child('conversationType').val() === 'direct' || newData.child('conversationType').val() === 'group')",
           "senderId": { ".validate": "newData.isString()" },
           "conversationType": { ".validate": "newData.isString()" },
           "text": { ".validate": "newData.isString()" },

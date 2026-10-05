@@ -16,7 +16,8 @@ export type DeviceRegistrationStatus =
   | 'permission_denied'
   | 'not_a_device'
   | 'no_token'
-  | 'error';
+  | 'error'
+  | 'firestore_error';
 
 export type PushPayload = {
   conversationId: string;

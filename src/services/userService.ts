@@ -1,7 +1,8 @@
-import { collection, doc, getDoc, onSnapshot } from 'firebase/firestore';
+import { collection, doc, getDoc, onSnapshot, updateDoc } from 'firebase/firestore';
 import type { DocumentData, Unsubscribe } from 'firebase/firestore';
 import { firestore } from './firebase';
 import { fetchSharedProfile } from './apiService';
+import { uploadProfilePhoto } from './storageService';
 import type { ChatUser, PrivateProfile, PublicProfile, ViewedProfile } from '../types/user';
 import { asNumber, asString } from '../utils/parsing';
 
@@ -14,6 +15,12 @@ export function parsePublicProfile(uid: string, data: DocumentData): PublicProfi
   };
 }
 
+export async function updateProfilePhoto(uid: string, photoUri: string): Promise<string> {
+  const photoUrl = await uploadProfilePhoto(uid, photoUri);
+  await updateDoc(doc(firestore, 'users', uid), { photoUrl });
+  return photoUrl;
+}
+
 export function subscribeUsers(
   onData: (users: PublicProfile[]) => void,
   onError: (error: unknown) => void,
@@ -21,7 +28,13 @@ export function subscribeUsers(
   return onSnapshot(
     collection(firestore, 'users'),
     (snap) => onData(snap.docs.map((d) => parsePublicProfile(d.id, d.data()))),
-    onError,
+    (error: unknown) => {
+      if (__DEV__) {
+        const err = error as { code?: string; message?: string };
+        console.warn('subscribeUsers error:', err?.code, err?.message);
+      }
+      onError(error);
+    },
   );
 }
 

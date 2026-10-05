@@ -33,6 +33,6 @@ module.exports = {
     ],
   ],
   extra: {
-    eas: { projectId: process.env.EAS_PROJECT_ID},
+    eas: { projectId: '9a1f4741-aa5e-4306-be68-19022efb3898' },
   },
 };
