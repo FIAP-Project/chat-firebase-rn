@@ -153,7 +153,7 @@ eas build --profile development --platform android   # development build
 eas build --profile preview --platform android        # APK instalável direto
 ```
 
-**Link do APK / build para teste:** `PREENCHER — https://expo.dev/accounts/cerbon/projects/chat-firebase-rn/builds/...`
+**Link do APK / build para teste:** `https://drive.google.com/file/d/1KZeSjpIOkHWS6LD17Jv7yGOVKzQ9WBaa/view?usp=sharing`
 
 ## 🔑 Variáveis de ambiente
 
@@ -288,15 +288,7 @@ Use **dois aparelhos** (ou um físico e um emulador) com contas diferentes. As c
 
 ## 📸 Prints e evidências
 
-<!-- PREENCHER: adicione as imagens em docs/screenshots/ e troque o texto pelo link da imagem -->
-| Tela | Print |
-|---|---|
-| Login / Cadastro | `docs/screenshots/login.png` |
-| Conversas | `docs/screenshots/conversas.png` |
-| Chat em grupo | `docs/screenshots/chat-grupo.png` |
-| Formulário de grupo (limite/política) | `docs/screenshots/grupo-form.png` |
-| Perfil | `docs/screenshots/perfil.png` |
-| **Notificação recebida** | `docs/screenshots/push.png` |
+https://drive.google.com/file/d/1cUf-_AY_VPdx8lwzvlb-QeInecK1smqn/view?usp=sharing
 
 ## 📚 Referências
 
